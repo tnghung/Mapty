@@ -15,13 +15,38 @@ navigator.geolocation.getCurrentPosition(
     const { latitude } = position.coords;
     const { longitude } = position.coords;
     const coords = [latitude, longitude];
-    const map = L.map('map').setView(coords, 20);
+
+    const map = L.map('map').setView(coords, 15);
+
+    const popup = L.popup({
+      maxWidth: 250,
+      minWidth: 100,
+      autoClose: false,
+      closeOnClick: false,
+      className: 'running-popup',
+    });
 
     L.tileLayer('https://{s}.tile.openstreetmap.fr/hot/{z}/{x}/{y}.png', {
       attribution: '&copy; <a  target="_blank" href="https://www.openstreetmap.org/copyright">OpenStreetMap</a>',
     }).addTo(map);
+    map.on('click', function (mapEvent) {
+      console.log(mapEvent);
+      const { lat, lng } = mapEvent.latlng;
 
-    L.marker(coords).addTo(map).bindPopup('A pretty CSS3 popup.<br> Easily customizable.').openPopup();
+      L.marker([lat, lng])
+        .addTo(map)
+        .bindPopup(
+          L.popup({
+            maxWidth: 250,
+            minWidth: 100,
+            autoClose: false,
+            closeOnClick: false,
+            className: 'running-popup',
+          })
+        )
+        .setPopupContent(`Your coordinates: ${lat}, ${lng}`)
+        .openPopup();
+    });
   },
   function () {
     alert('Could not get your current position!');
