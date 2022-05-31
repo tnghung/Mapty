@@ -20,7 +20,10 @@ class WorkOut {
   }
 
   _setDescription() {
-    this.description = `${this.type[0].toUpperCase()}${this.type.slice(1)} on ${months[this.date.getMonth()]} ${this.date.getDate()}`;
+    const capitalType = `${this.type[0].toUpperCase()}${this.type.slice(1)}`;
+    const month = `${months[this.date.getMonth()]}`;
+    const dayOfMonth = `${this.date.getDate()}`;
+    this.description = `${capitalType} on ${month} ${dayOfMonth}`;
   }
 }
 
@@ -57,7 +60,7 @@ class Cycling extends WorkOut {
 class App {
   #map;
   #mapEvent;
-  #mapZoomLevel = 15;
+  #mapZoomLevel = 19;
   #workouts = [];
 
   constructor() {
@@ -65,7 +68,7 @@ class App {
     this._getData();
     inputType.addEventListener('change', this._toggleElevationField);
     form.addEventListener('submit', this._newWorkOut.bind(this));
-    containerWorkouts.addEventListener('click', this._moveToPopup);
+    containerWorkouts.addEventListener('click', this._moveToPopup.bind(this));
   }
 
   _getPosition() {
@@ -83,22 +86,40 @@ class App {
     this.#map.on('click', this._showForm.bind(this));
   }
 
+  _toggleElevationField() {
+    inputCadence.closest('.form__row').classList.toggle('form__row--hidden');
+    inputElevation.closest('.form__row').classList.toggle('form__row--hidden');
+  }
+
+  _moveToPopup(e) {
+    const workOutEle = e.target.closest('.workout');
+    if (!workOutEle) return;
+    const workout = this.#workouts.find((val) => val.id === workOutEle.dataset.id);
+    if (!this.#map) return;
+    this.#map.setView(workout.coords, this.#mapZoomLevel, {
+      animate: true,
+      pan: {
+        duration: 1,
+      },
+    });
+  }
+
+  // --------------- Handle Form ----------------
+  _clearTextFields() {
+    inputDistance.value = inputDuration.value = inputCadence.value = inputElevation.value = '';
+  }
   _showForm(mapE) {
     this.#mapEvent = mapE;
+    this._clearTextFields();
     form.classList.remove('hidden');
     inputDistance.focus();
   }
 
   _hideForm() {
-    inputDistance.value = inputDuration.value = inputCadence.value = inputElevation.value = '';
+    this._clearTextFields();
     form.style.display = 'none';
     form.classList.add('hidden');
     setTimeout(() => (form.style.display = 'grid'), 1000);
-  }
-
-  _toggleElevationField(e) {
-    inputCadence.closest('.form__row').classList.toggle('form__row--hidden');
-    inputElevation.closest('.form__row').classList.toggle('form__row--hidden');
   }
 
   _newWorkOut(e) {
