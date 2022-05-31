@@ -10,50 +10,46 @@ const inputDuration = document.querySelector('.form__input--duration');
 const inputCadence = document.querySelector('.form__input--cadence');
 const inputElevation = document.querySelector('.form__input--elevation');
 
-let map, mapEvent;
-
-navigator.geolocation.getCurrentPosition(
-  function (position) {
-    const { latitude } = position.coords;
-    const { longitude } = position.coords;
-    const coords = [latitude, longitude];
-
-    map = L.map('map').setView(coords, 15);
-
-    L.tileLayer('https://{s}.tile.openstreetmap.fr/hot/{z}/{x}/{y}.png', {
-      attribution: '&copy; <a  target="_blank" href="https://www.openstreetmap.org/copyright">OpenStreetMap</a>',
-    }).addTo(map);
-
-    map.on('click', function (mapE) {
-      mapEvent = mapE;
-      form.classList.remove('hidden');
-      inputDistance.focus();
-    });
-  },
-  function () {
-    alert('Could not get your current position!');
+class App {
+  #map;
+  #mapZoomLevel = 15;
+  constructor() {
+    this._getPosition();
+    inputType.addEventListener('change', this._toggleElevationField);
   }
-);
 
-form.addEventListener('submit', function (e) {
-  e.preventDefault();
-  const { lat, lng } = mapEvent.latlng;
-  L.marker([lat, lng])
-    .addTo(map)
-    .bindPopup(
-      L.popup({
-        maxWidth: 250,
-        minWidth: 100,
-        autoClose: false,
-        closeOnClick: false,
-        className: 'running-popup',
-      })
-    )
-    .setPopupContent(`Your coordinates: ${lat}, ${lng}`)
-    .openPopup();
-});
+  _getPosition() {
+    navigator.geolocation.getCurrentPosition(this._loadMap.bind(this), () => alert('Can not get your position!'));
+  }
 
-inputType.addEventListener('change', function(){
+  _loadMap(position) {
+    const { latitude, longitude } = position.coords;
+    const coords = [latitude, longitude];
+    this.#map = L.map('map').setView(coords, this.#mapZoomLevel);
+    L.tileLayer('https://{s}.tile.openstreetmap.fr/hot/{z}/{x}/{y}.png', {
+      attribution: '&copy; <a href="https://www.openstreetmap.org/copyright">OpenStreetMap</a> contributors',
+    }).addTo(this.#map);
+
+    this.#map.on('click', this._showForm);
+  }
+
+  _renderMarkers(coords) {
+    L.marker(coords)
+      .addTo(this.#map)
+      .bindPopup(L.popup({ maxWidth: 250, minWidth: 100, autoClose: false, closeOnClick: false, className: 'running-popup' }))
+      .setPopupContent('Work out')
+      .openPopup();
+  }
+
+  _showForm() {
+    form.classList.remove('hidden');
+    inputDistance.focus();
+  }
+
+  _toggleElevationField(e) {
     inputCadence.closest('.form__row').classList.toggle('form__row--hidden');
     inputElevation.closest('.form__row').classList.toggle('form__row--hidden');
-})
+  }
+}
+
+const app = new App();
