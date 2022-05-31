@@ -62,8 +62,10 @@ class App {
 
   constructor() {
     this._getPosition();
+    this._getData();
     inputType.addEventListener('change', this._toggleElevationField);
     form.addEventListener('submit', this._newWorkOut.bind(this));
+    containerWorkouts.addEventListener('click', this._moveToPopup);
   }
 
   _getPosition() {
@@ -77,7 +79,7 @@ class App {
     L.tileLayer('https://{s}.tile.openstreetmap.fr/hot/{z}/{x}/{y}.png', {
       attribution: '&copy; <a href="https://www.openstreetmap.org/copyright">OpenStreetMap</a> contributors',
     }).addTo(this.#map);
-
+    this.#workouts.forEach((workout) => this._renderWorkOutMarker(workout));
     this.#map.on('click', this._showForm.bind(this));
   }
 
@@ -138,6 +140,9 @@ class App {
 
     // Add new item to list UI
     this._renderWorkout(workout);
+
+    // Save to local storage
+    this._setData();
   }
 
   _renderWorkout(workout) {
@@ -195,6 +200,22 @@ class App {
       .bindPopup(L.popup({ maxWidth: 250, minWidth: 100, autoClose: false, closeOnClick: false, className: `${workout.type}-popup` }))
       .setPopupContent(`${workout.type === 'running' ? '🏃‍♂️' : '🚴‍♀️'} ${workout.description}`)
       .openPopup();
+  }
+
+  _setData() {
+    localStorage.setItem('workouts', JSON.stringify(this.#workouts));
+  }
+
+  _getData() {
+    const data = JSON.parse(localStorage.getItem('workouts'));
+    if (!data) return;
+    this.#workouts = data;
+    this.#workouts.forEach((val) => this._renderWorkout(val));
+  }
+
+  reset() {
+    localStorage.removeItem('workouts');
+    location.reload();
   }
 }
 
